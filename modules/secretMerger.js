@@ -5,16 +5,16 @@ exports.GetModuleData = function _getMergedSecretData(jsonData) {
 };
 
 function _mergeData(secretMerger){
-  const dataObj = secretMerger.data;
+  const configObj = secretMerger.config;
   const secrets = secretMerger.secrets;
 
   (_ => {
-    const allKeys = Object.keys(secrets).concat(Object.keys(dataObj));
+    const allKeys = Object.keys(secrets).concat(Object.keys(configObj));
     return [...new Set(allKeys)];
   })().forEach(key => {
-    _recursiveObjectValueMerger(secrets[key], dataObj[key])
+    _recursiveObjectValueMerger(secrets[key], configObj[key])
   });
-  return [JSON.stringify(dataObj, null, '\t')].map((mergedSecret, i) => {
+  return [JSON.stringify(configObj, null, '\t')].map((mergedSecret, i) => {
     return {
       "subModule": {
         "names": [`${i}`],  // this is used to set the name for the output file

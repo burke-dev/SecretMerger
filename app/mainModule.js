@@ -20,7 +20,7 @@ exports.WriteData = function _writeDataMain(rootDir, allModules) {
 
 function _getAllJsonData(allModules){
   return allModules.map(module => {
-    const modulePath = `${_rootDir}\\data\\${module}`;
+    const modulePath = `${_rootDir}\\rawData\\${module}`;
     const master = `${modulePath}\\master.json`;
     if (fs.existsSync(master)) {
       const masterData = (_ => {
