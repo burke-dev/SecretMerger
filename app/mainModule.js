@@ -7,7 +7,6 @@ exports.WriteData = function _writeDataMain(rootDir, allModules) {
   _rootDir = rootDir;
   const failedModules = _getAllJsonData(allModules).map(moduleData => {
     if(typeof moduleData === 'string'){
-      failedModules.push(moduleData);
       return moduleData;
     }
     _writeAllModulesToOutputFile(moduleData);
@@ -146,7 +145,7 @@ function _formatName(value){
     console.error(`_formatName() error -  ${_valueNotString(value)}`);
     return '';
   }
-  return (typeof value === 'string' ? value : value.name ?? '')
+  return (typeof value === 'string' ? value : '')
     .replace(/\s(.)/g, a => a.toUpperCase())  // capitalize the first letter of each word
     .replace(/\s/g, '')                       // remove spaces
     .replace(/^(.)/, b => b.toLowerCase());   // set first letter to lower case
