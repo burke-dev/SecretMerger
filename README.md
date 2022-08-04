@@ -1,14 +1,19 @@
 # SecretMerger
-Merge two json files - one config and one secrets file
+Merge two json files into one output file - one config and one secrets file
+
+To run:
+  - launch.json has option for "Secret Merger"
+
 Input files are:
-  - rawData\secretManager\config.json
-  - rawData\secretManager\secrets.json
+  - "config"  =>  rawData\secretManager\config.json
+  - "secrets" =>  rawData\secretManager\secrets.json
+
 Output file is:
-  - output\secretMerger-0-Output.json
+  - "output"  =>  output\secretMerger-0-Output.json
 
 
 Example:
-  - config.json
+  - config
   {
     "Meditation": {
       "EventSubject": "Duck",
@@ -17,14 +22,14 @@ Example:
     }
   }
 
-  - secrets.json
+  - secrets
   {
     "Meditation": {
       "Credential": "1ihQjlEgXDXYqXn8HmRCeVp13Uhe0CXwT6ccfE5TKME="
     }
   }
 
-  -output
+  - output
   {
     "Meditation": {
       "EventSubject": "Duck",
