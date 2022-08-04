@@ -5,22 +5,22 @@ let _rootDir;
 
 exports.WriteData = function _writeDataMain(rootDir, allModules) {
   _rootDir = rootDir;
-  let failedModules = [];
-  _getAllJsonData(allModules).forEach(moduleData => {
+  const failedModules = _getAllJsonData(allModules).map(moduleData => {
     if(typeof moduleData === 'string'){
       failedModules.push(moduleData);
-      return;
+      return moduleData;
     }
     _writeAllModulesToOutputFile(moduleData);
-  });
+    return null;
+  }).filter(n => n).join(", ");
   if(failedModules.length){
-    const hasMultiple = failedModules.length > 1 ? "Modules" : "Module";
-    console.error(`${hasMultiple} failed to write -> ${failedModules.join(", ")}`);
+    const hasMultiple = failedModules.includes(",") ? "Modules" : "Module";
+    console.error(`${hasMultiple} failed to write -> ${failedModules}`);
   }
 };
 
 function _getAllJsonData(allModules){
-  const dataObjs = allModules.map(module => {
+  return allModules.map(module => {
     const modulePath = `${_rootDir}\\data\\${module}`;
     const master = `${modulePath}\\master.json`;
     if (fs.existsSync(master)) {
@@ -29,19 +29,18 @@ function _getAllJsonData(allModules){
         return JSON.parse(file);
       })();
       const subModules = (masterData.subModules ?? []).map((subModule) => typeof subModule === 'string' ? subModule.toLowerCase() : subModule);
-      const specials = masterData.specials ?? [];
       const hasOutputTypes = masterData.hasOutputTypes ?? false;
+      const specials = masterData.specials ?? [];
       return {
         [module]: {
           subModules,
-          ..._getSpecials(modulePath, hasOutputTypes, specials),
-          ..._getDataArrays(modulePath, masterData.files, masterData.format)
+          ..._getDataObject(modulePath, masterData.files, masterData.format),
+          ..._getSpecials(modulePath, hasOutputTypes, specials)
         }
       };
     }
     return module;
   });
-  return dataObjs;
 }
 
 function _getSpecials(modulePath, hasOutputTypes, specials){
@@ -83,7 +82,7 @@ function _getModuleValues(moduleData, key){
   return [];
 }
 
-function _getDataArrays(partPath, files, format){
+function _getDataObject(partPath, files, format){
   let dataObject = {};
   files.forEach(sectionData => {
     const path = `${partPath}\\${sectionData}.json`;
@@ -113,7 +112,6 @@ function _writeAllModulesToOutputFile(moduleData){
 }
 
 function _writeSubModuleToFile(module){
-  _stringifyGsFormatValues(module);
   const moduleName = _getName(module.name);
   module.subModules.forEach(subModule => {
     const fileName = (_ => {
@@ -127,7 +125,7 @@ function _writeSubModuleToFile(module){
 
 function _writeToFile(fileName, value){
   if(typeof value !== 'string'){
-    _writeFileError(fileName, value);
+    console.error(`"${fileName}" ${_valueNotString(value)}`);
     return;
   }
   fs.writeFile(`${_rootDir}\\output\\${fileName}`, value, "utf8", err => {
@@ -138,51 +136,25 @@ function _writeToFile(fileName, value){
   });
 }
 
-function _writeFileError(fileName, value){
-    const valueType = Array.isArray(value) ? 'array' : typeof value;
-    const valueIsFirstLetter = valueType.split('')[0];
-    const prefix = ['a', 'e', 'i', 'o', 'u'].filter(n => n === valueIsFirstLetter).length ? 'an' : 'a';
-    console.error(`"${fileName}" value is ${prefix} "${(valueType)}" type - but must by a string`);
-}
-
 function _getName(entry){
-  const entryName = typeof entry === 'string' ? _getCamelCase(entry) : _getName(entry.name ?? '');
-  return entryName.length ? `${entryName}-` : 'unknown-';
+  const formattedName = _formatName(entry);
+  return formattedName.length ? `${formattedName}-` : 'unknown-';
 }
 
-function _getCamelCase(str){
-  if(typeof str !== 'string'){
-    console.error(`_getCamelCase() error - str must be typeof string not -> ${(typeof str)} - ${str}`);
+function _formatName(value){
+  if(typeof value !== 'string'){
+    console.error(`_formatName() error -  ${_valueNotString(value)}`);
     return '';
   }
-  return str
+  return (typeof value === 'string' ? value : value.name ?? '')
     .replace(/\s(.)/g, a => a.toUpperCase())  // capitalize the first letter of each word
     .replace(/\s/g, '')                       // remove spaces
     .replace(/^(.)/, b => b.toLowerCase());   // set first letter to lower case
 }
 
-function _stringifyGsFormatValues(module){
-  if(module.format === 'gs'){
-    // Google Sheets graphs work on a strict set of rows and columns
-    // This is used to keep each "valueRow" on the same line after formatting
-    const newSubModules = [];
-    module.subModules.forEach(subModule => {
-      subModule.specials.length
-        ? subModule.value.forEach((specialRows, i) => _stringifyValues(newSubModules, [subModule.name, subModule.specials[i]], specialRows))
-        : _stringifyValues(newSubModules, [subModule.name], subModule.value);
-    });
-    module.subModules = newSubModules;
-  }
-}
-
-function _stringifyValues(newSubModules, names, rawValue){
-  const formattedValues = rawValue.map(rawRows => {
-    const formattedRows = rawRows.map(rawRow => `"${rawRow}"`).join(',');
-    return `[${formattedRows}]`
-  });
-  const value = JSON.stringify(formattedValues, null, '\t')
-    .replace(/\"\[/gi,"[")    // replace  -> "[   -> [
-    .replace(/\\/gi,"")       // replace  -> \    -> empty string
-    .replace(/\]\"/gi,"]");   // replace  -> ]"   -> ]
-  newSubModules.push({ names, value });
+function _valueNotString(value){
+  const valueType = Array.isArray(value) ? 'array' : typeof value;
+  const valueIsFirstLetter = valueType.split('')[0];
+  const prefix = ['a', 'e', 'i', 'o', 'u'].filter(n => n === valueIsFirstLetter).length ? 'an' : 'a';
+  return `value is ${prefix} "${(valueType)}" type - but must by a string`;
 }
