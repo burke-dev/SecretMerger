@@ -27,12 +27,10 @@ function _getAllJsonData(allModules){
         const file = fs.readFileSync(master, 'utf8');
         return JSON.parse(file);
       })();
-      const subModules = (masterData.subModules ?? []).map((subModule) => typeof subModule === 'string' ? subModule.toLowerCase() : subModule);
       const hasOutputTypes = masterData.hasOutputTypes ?? false;
       const specials = masterData.specials ?? [];
       return {
         [module]: {
-          subModules,
           ..._getDataObject(modulePath, masterData.files, masterData.format),
           ..._getSpecials(modulePath, hasOutputTypes, specials)
         }
@@ -60,12 +58,11 @@ function _getAllModules(moduleData){
   return Object.keys(moduleData).map(key => {
     const values = _getModuleValues(moduleData, key).filter(n => n);
     if (values.length){
-      const subModules = (_ => values.map(value => value.subModule ?? null).filter(n => n))();
       return {
         "name": key,
-        subModules,
+        "subModules": (_ => values.map(value => value.subModule ?? null).filter(n => n))(),
         values,
-        format: moduleData[key].format
+        "format": moduleData[key].format
       }
     }
     return null;
