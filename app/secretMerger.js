@@ -1,80 +1,67 @@
 "use strict";
-
 const fs = require('fs');
-const path = require('path');
-const _rootDir = path.join(__dirname, '../');
 
 (_ => {
-  // failed modules return the name for console
-  const moduleData = _getAllJsonData();
-  const module = _mergeData(moduleData);
-  _writeToFile(module);
+  const sectionData = _getSectionData();
+  const outputObj = _getOutputObj(sectionData);
+  _writeToFile(outputObj);
 })();
 
-// formats data into an array
-function _getAllJsonData(){
-  let dataObject = {};
-  [ "config", "secrets" ].forEach(sectionName => {
-    const path = `${_rootDir}\\rawData\\${sectionName}.json`;
+// gets the data from the respective file and formats them into the sectionData object
+function _getSectionData(){
+  const sectionData = {};
+  ["config", "secrets"].forEach(sectionName => {
+    const path = `${__dirname}\\..\\rawData\\${sectionName}.json`;
     if (fs.existsSync(path)) {
-      dataObject[sectionName] = {};
-      const pathJson = (_ => {
+      return (_ => {
         const pathFiles = fs.readFileSync(path, 'utf8');
-        return JSON.parse(pathFiles);
+        sectionData[sectionName] = JSON.parse(pathFiles);
       })();
-      Object.keys(pathJson).forEach(key => {
-        dataObject[sectionName][key] = pathJson[key];
-      });
     }
+    console.error(`unable to find data for ${sectionName}`);
+    return null;
   });
-  return dataObject;
+  return sectionData;
+};
+
+// updates the config values with the secrets values then 
+function _getOutputObj(sectionData){
+  if(sectionData.config && sectionData.secrets){
+    Object.keys(sectionData.secrets).forEach(key => {
+      _recursiveObjectValueMerger(sectionData.config[key], sectionData.secrets[key])
+    });
+    return sectionData.config;
+  }
+  return null;
 }
 
-function _mergeData(moduleData){
-  const configObj = moduleData.config;
-  const secrets = moduleData.secrets;
-
-  (_ => {
-    const allKeys = Object.keys(secrets).concat(Object.keys(configObj));
-    return [...new Set(allKeys)];
-  })().forEach(key => {
-    _recursiveObjectValueMerger(secrets[key], configObj[key])
-  });
-  return `${(JSON.stringify(configObj, null, '\t'))}\r\n`;
-}
-
-function _writeToFile(module){
-  fs.writeFile(`${_rootDir}\\output\\secretMerger-Output.json`, module, "utf8", err => {
-    if(err) {
-      return console.error(err);
-    }
-    console.log("Saved successfully!");
-  });
-}
-
-function _recursiveObjectValueMerger(secret, data){
-  data = data ?? {};
+// digs down into the config and secret objects to find the value to be added to the config
+function _recursiveObjectValueMerger(config, secret){
+  config = config ?? {};
   secret = secret ?? {};
   if(Array.isArray(secret)){
-    secret.forEach(entry => {
-      data.push(entry);
-    });
-    return data.filter(entry => !entry.includes("**"));
+    let z = 0;
+    return config.map(entry => entry.includes("**") ? secret[z++] : entry);
   }
   if(typeof secret === 'object'){
     Object.keys(secret).forEach(key => {
-      data[key] = _recursiveObjectValueMerger(secret[key], data[key] ?? secret[key]);
+      config[key] = _recursiveObjectValueMerger(config[key], secret[key]);
     });
-    return data;
+    return config;
   }
   if(typeof secret === 'string'){
-    return secret && secret.length ? secret : data;
+    return secret;
   }
 }
 
-function _valueNotString(value){
-  const valueType = Array.isArray(value) ? 'array' : typeof value;
-  const valueIsFirstLetter = valueType.split('')[0];
-  const prefix = ['a', 'e', 'i', 'o', 'u'].filter(n => n === valueIsFirstLetter).length ? 'an' : 'a';
-  return `value is ${prefix} "${(valueType)}" type - but must by a string`;
+function _writeToFile(outputObj){
+  if(outputObj){
+    const outputObjAsString =  `${(JSON.stringify(outputObj, null, '\t'))}\r\n`;
+    fs.writeFile(`${__dirname}\\..\\output\\secretMerger-Output.json`, outputObjAsString, "utf8", err => {
+      if(err) {
+        return console.error(err);
+      }
+      console.log("Saved successfully!");
+    });
+  }
 }

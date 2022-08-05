@@ -5,11 +5,9 @@
   },
   "Meditation": {
     "EventSubject": "Duck",
-    "Credential": "*****",
     "TopicEndpointUrl": "https://www.youtube.com/watch?v=YbaTur4A1OU"
   },
   "CoolSweaters": {
-    "Credential": "*****",
     "Selected": "Red"
   },
   "Silent": {
