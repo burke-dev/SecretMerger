@@ -1,6 +1,0 @@
-{
-  "files": [ "config", "secrets" ],
-  "subModules": null,
-  "specials": null,
-  "format": "json"
-}

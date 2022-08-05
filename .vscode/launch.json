@@ -9,7 +9,6 @@
     "request": "launch",
     "cwd": "${workspaceRoot}",
     "skipFiles": [ "<node_internals>/**" ],
-    "program": "${workspaceRoot}/app/main.js",
-    "args": [ "secretMerger" ]
+    "program": "${workspaceRoot}/app/secretMerger.js"
   }]
 }

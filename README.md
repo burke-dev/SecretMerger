@@ -5,11 +5,11 @@ To run:
   - launch.json has option for "Secret Merger"
 
 Input files are:
-  - "config"  =>  rawData\secretManager\config.json
-  - "secrets" =>  rawData\secretManager\secrets.json
+  - "config"  =>  rawData\config.json
+  - "secrets" =>  rawData\secrets.json
 
 Output file is:
-  - "output"  =>  output\secretMerger-0-Output.json
+  - "output"  =>  output\secretMerger-Output.json
 
 
 Example:
